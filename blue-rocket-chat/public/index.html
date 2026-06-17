@@ -21,21 +21,25 @@
     </form>
   </div>
   <script>
-    document.getElementById('regForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('user').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('pass').value;
-      localStorage.setItem('pendingEmail', email);
+   document.getElementById('regForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('user').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('pass').value;
+  localStorage.setItem('pendingEmail', email);
 
-      const res = await fetch('/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
-      });
-      if (res.ok) window.location.href = '/verify.html';
-      else alert('Signup failed');
-    });
-  </script>
-</body>
-</html>
+  const res = await fetch('/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password })
+  });
+  
+  const data = await res.json();
+  if (res.ok) {
+    // This alerts you what the code is so you can type it on the next page!
+    alert(`Debug mode: Your 6-digit verification code is ${data.debugCode}`);
+    window.location.href = '/verify.html';
+  } else { 
+    alert('Signup failed'); 
+  }
+});
