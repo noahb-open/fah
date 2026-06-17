@@ -50,19 +50,24 @@ app.post('/api/signup', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// VERIFICATION ROUTE
-app.post('/api/verify', async (req, res) => {
-  const { email, code } = req.body;
-  const user = await User.findOne({ email });
-  if (user && user.verificationCode === code) {
-    user.isVerified = true;
-    user.verificationCode = null;
-    await user.save();
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    return res.json({ success: true, token, username: user.username });
-  }
-  res.status(400).json({ success: false, message: 'Invalid Code' });
+// SIGN UP ROUTE (No Email Setup Required!)
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    const existing = await User.findOne({ $or: [{ email }, { username }] });
+    if (existing) return res.status(400).json({ error: 'Username/Email taken' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const newUser = new User({ username, email, password: hashedPassword, verificationCode: code });
+    await newUser.save();
+
+    // Instead of emailing, we send the code straight back to the frontend response for easy testing!
+    res.status(201).json({ message: 'Code generated!', debugCode: code });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
 
 // WIPE CHAT ROUTE (Snapchat-style)
 app.post('/api/messages/delete', async (req, res) => {
